@@ -190,3 +190,106 @@ __说明__, 如上，`@Bean`,`@Component`的处理流程是一样的/一套代�
 ...
 
 ```
+
+
+## @Resource的实现
+### 使用例子
+```$xslt
+//task
+package com.example.demo.service;
+
+public interface Task {
+
+    void doTask(String taskName);
+}
+
+//taskImpl
+package com.example.demo.service;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class TaskImpl implements Task {
+
+    @Override
+    public void doTask(String taskName) {
+        System.out.println(taskName);
+    }
+}
+
+//controller
+package com.example.demo.controller;
+
+import com.example.demo.service.Task;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+
+@RestController
+public class TestController {
+
+    @Resource
+    Task task;
+
+    public TestController() {
+        System.out.println("a");
+    }
+
+
+    @GetMapping("/hello")
+    public String hello(@RequestParam(value = "name", defaultValue = "World") String name) {
+        return String.format("Hello %s!", name);
+    }
+
+    @GetMapping("/echo")
+    public String echo() {
+        task.doTask("test");
+        return "just fine";
+    }
+
+}
+
+```
+
+### 实际实现
+```$xslt
+//ioc过程
+doCreateBean:559, AbstractAutowireCapableBeanFactory (org.springframework.beans.factory.support) [2]
+createBean:524, AbstractAutowireCapableBeanFactory (org.springframework.beans.factory.support)
+lambda$doGetBean$0:335, AbstractBeanFactory (org.springframework.beans.factory.support)
+getObject:-1, 1079125839 (org.springframework.beans.factory.support.AbstractBeanFactory$$Lambda$325)
+getSingleton:234, DefaultSingletonBeanRegistry (org.springframework.beans.factory.support)
+doGetBean:333, AbstractBeanFactory (org.springframework.beans.factory.support)
+getBean:208, AbstractBeanFactory (org.springframework.beans.factory.support)
+resolveCandidate:276, DependencyDescriptor (org.springframework.beans.factory.config)
+doResolveDependency:1380, DefaultListableBeanFactory (org.springframework.beans.factory.support)
+resolveDependency:1300, DefaultListableBeanFactory (org.springframework.beans.factory.support)
+autowireResource:521, CommonAnnotationBeanPostProcessor (org.springframework.context.annotation)
+getResource:497, CommonAnnotationBeanPostProcessor (org.springframework.context.annotation)
+getResourceToInject:650, CommonAnnotationBeanPostProcessor$ResourceElement (org.springframework.context.annotation)
+inject:228, InjectionMetadata$InjectedElement (org.springframework.beans.factory.annotation)
+inject:119, InjectionMetadata (org.springframework.beans.factory.annotation)
+postProcessProperties:318, CommonAnnotationBeanPostProcessor (org.springframework.context.annotation)
+populateBean:1413, AbstractAutowireCapableBeanFactory (org.springframework.beans.factory.support)
+doCreateBean:601, AbstractAutowireCapableBeanFactory (org.springframework.beans.factory.support) [1]
+createBean:524, AbstractAutowireCapableBeanFactory (org.springframework.beans.factory.support)
+lambda$doGetBean$0:335, AbstractBeanFactory (org.springframework.beans.factory.support)
+getObject:-1, 1079125839 (org.springframework.beans.factory.support.AbstractBeanFactory$$Lambda$325)
+getSingleton:234, DefaultSingletonBeanRegistry (org.springframework.beans.factory.support)
+doGetBean:333, AbstractBeanFactory (org.springframework.beans.factory.support)
+getBean:208, AbstractBeanFactory (org.springframework.beans.factory.support)
+preInstantiateSingletons:944, DefaultListableBeanFactory (org.springframework.beans.factory.support)
+finishBeanFactoryInitialization:918, AbstractApplicationContext (org.springframework.context.support)
+refresh:583, AbstractApplicationContext (org.springframework.context.support)
+refresh:145, ServletWebServerApplicationContext (org.springframework.boot.web.servlet.context)
+refresh:758, SpringApplication (org.springframework.boot)
+refreshContext:438, SpringApplication (org.springframework.boot)
+run:337, SpringApplication (org.springframework.boot)
+run:1336, SpringApplication (org.springframework.boot)
+run:1325, SpringApplication (org.springframework.boot)
+main:20, DemoApplication (com.example.demo)
+```
+__说明__,在`TestController`的实例化过程，会处理依赖关系，其中发现通过`@Resource`依赖了`Task`；此时找到实例化的`TaskImpl`并提供给`TaskController`，
+完成`@Resource`的注入
